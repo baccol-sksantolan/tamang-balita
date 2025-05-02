@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Story</title>
+</head>
+<body>
+    <div id="fullStoryContainer"></div>
+    <script>
+        // Get query parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const topic = urlParams.get("topic");
+        const index = urlParams.get("index");
+
+        // Display the full story
+        const news = newsData[topic][index];
+        const fullStoryContainer = document.getElementById("fullStoryContainer");
+        fullStoryContainer.innerHTML = `
+            <h1>${news.title}</h1>
+            <p>${news.description}</p>
+        `;
+    </script>
+</body>
+</html>

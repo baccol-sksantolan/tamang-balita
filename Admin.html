@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="admin.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js"></script>
+</head>
+<body>
+    <header class="admin-header">
+        <h1>Admin Dashboard</h1>
+    </header>
+    <main class="admin-container">
+        <aside class="admin-sidebar">
+            <h2>WELCOME ADMIN!</h2>
+            <ul>
+                <li><a href="Web Viewer.html" target="_blank">View All Published News</a></li>
+                <li>
+                    <a href="#manage-news">Manage News</a>
+                    <ul>
+                        <li><button id="upload-news">Upload News</button></li>
+                        <li><button id="archive-news">Archive News</button></li>
+                        <li><button id="delete-news">Delete News</button></li>
+                    </ul>
+                </li>
+            </ul>
+        </aside>
+        <section class="admin-content" id="admin-content">
+            <h2>Action Panel</h2>
+            <p>Select an action from the menu to get started.</p>
+            <div id="news-list"></div>
+        </section>
+    </main>
+    <footer class="admin-footer">
+        <p>&copy; 2025 News Admin Panel</p>
+    </footer>
+    <script>
+        // Load environment variables
+        require('dotenv').config();
+
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: process.env.REACT_APP_API_KEY,
+            authDomain: process.env.REACT_APP_AUTH_DOMAIN,
+            projectId: process.env.REACT_APP_PROJECT_ID,
+            storageBucket: process.env.REACT_APP_STORAGE_BUCKET,
+            messagingSenderId: process.env.REACT_APP_MESSAGING_SENDER_ID,
+            appId: process.env.REACT_APP_APP_ID,
+            measurementId: process.env.REACT_APP_MEASUREMENT_ID
+        };
+
+        // Initialize Firebase
+        const app = firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Reference to the "news" collection in the database
+        const newsRef = db.ref("news");
+
+        // Function to upload news
+        document.getElementById("upload-news").addEventListener("click", () => {
+            const title = prompt("Enter news title:");
+            const content = prompt("Enter news content:");
+            if (title && content) {
+                const newNews = newsRef.push();
+                newNews.set({
+                    title: title,
+                    content: content,
+                    status: "published"
+                });
+                alert("News uploaded successfully!");
+            }
+        });
+
+        // Function to archive news
+        document.getElementById("archive-news").addEventListener("click", () => {
+            fetchNews((newsId) => {
+                newsRef.child(newsId).update({ status: "archived" });
+                alert("News archived successfully!");
+            });
+        });
+
+        // Function to delete news
+        document.getElementById("delete-news").addEventListener("click", () => {
+            fetchNews((newsId) => {
+                newsRef.child(newsId).remove();
+                alert("News deleted successfully!");
+            });
+        });
+
+        // Function to fetch and display news in the Action Panel
+        function fetchNews(actionCallback) {
+            newsRef.once("value", (snapshot) => {
+                const newsContainer = document.getElementById("news-list");
+                newsContainer.innerHTML = "<h3>Select a News Item</h3>";
+                snapshot.forEach((childSnapshot) => {
+                    const news = childSnapshot.val();
+                    const newsId = childSnapshot.key;
+                    newsContainer.innerHTML += `
+                        <div>
+                            <h4>${news.title}</h4>
+                            <p>${news.content}</p>
+                            <p>Status: ${news.status}</p>
+                            <button onclick="handleAction('${newsId}')">Select</button>
+                        </div>
+                    `;
+                });
+
+                // Attach the action callback to the "Select" button
+                window.handleAction = actionCallback;
+            });
+        }
+    </script>
+    <script>
+        const auth = firebase.auth();
+
+        // Redirect to login if not authenticated
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = "AdminLogin.html"; // Redirect to login page
+            }
+        });
+    </script>
+</body>
+</html>
